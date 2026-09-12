@@ -53,7 +53,8 @@ WSGI_APPLICATION = 'maystudio_api.wsgi.application'
 
 import dj_database_url
 
-USE_POSTGRES = os.getenv('USE_POSTGRES', 'True').lower() == 'true'
+USE_POSTGRES = os.getenv('USE_POSTGRES', 'False').lower() == 'true'
+
 if USE_POSTGRES:
     database_url = os.getenv('DATABASE_URL')
     if database_url and not database_url.startswith('${'):
