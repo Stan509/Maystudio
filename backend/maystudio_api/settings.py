@@ -56,7 +56,7 @@ import dj_database_url
 USE_POSTGRES = os.getenv('USE_POSTGRES', 'True').lower() == 'true'
 if USE_POSTGRES:
     database_url = os.getenv('DATABASE_URL')
-    if database_url:
+    if database_url and not database_url.startswith('${'):
         DATABASES = {
             'default': dj_database_url.config(
                 default=database_url,
@@ -65,20 +65,25 @@ if USE_POSTGRES:
             )
         }
     else:
+        db_host = os.getenv('POSTGRES_HOST', 'localhost')
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
                 'NAME': os.getenv('POSTGRES_DB', 'maystudio'),
                 'USER': os.getenv('POSTGRES_USER', 'maystudio'),
                 'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'change-me'),
-                'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+                'HOST': db_host,
                 'PORT': os.getenv('POSTGRES_PORT', '5432'),
+                'OPTIONS': {
+                    'sslmode': 'require' if db_host not in ['localhost', '127.0.0.1', 'db'] else 'prefer',
+                }
             }
         }
     DATABASES['default'].setdefault('OPTIONS', {})
     DATABASES['default']['OPTIONS']['options'] = '-c search_path=maystudio,public'
 else:
     DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / 'db.sqlite3'}}
+
 
 
 AUTH_PASSWORD_VALIDATORS = []
