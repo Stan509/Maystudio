@@ -1,0 +1,2 @@
+After migrations:
+python seed_data.py
