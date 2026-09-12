@@ -51,20 +51,35 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'maystudio_api.wsgi.application'
 
+import dj_database_url
+
 USE_POSTGRES = os.getenv('USE_POSTGRES', 'True').lower() == 'true'
 if USE_POSTGRES:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('POSTGRES_DB', 'maystudio'),
-            'USER': os.getenv('POSTGRES_USER', 'maystudio'),
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'change-me'),
-            'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
-            'PORT': os.getenv('POSTGRES_PORT', '5432'),
+    database_url = os.getenv('DATABASE_URL')
+    if database_url:
+        DATABASES = {
+            'default': dj_database_url.config(
+                default=database_url,
+                conn_max_age=600,
+                conn_health_checks=True,
+            )
         }
-    }
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.getenv('POSTGRES_DB', 'maystudio'),
+                'USER': os.getenv('POSTGRES_USER', 'maystudio'),
+                'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'change-me'),
+                'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+                'PORT': os.getenv('POSTGRES_PORT', '5432'),
+            }
+        }
+    DATABASES['default'].setdefault('OPTIONS', {})
+    DATABASES['default']['OPTIONS']['options'] = '-c search_path=maystudio,public'
 else:
     DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / 'db.sqlite3'}}
+
 
 AUTH_PASSWORD_VALIDATORS = []
 LANGUAGE_CODE = 'en-us'

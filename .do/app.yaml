@@ -24,8 +24,11 @@ services:
         value: "*"
       - key: USE_POSTGRES
         value: "True"
+      - key: DATABASE_URL
+        value: "${db.DATABASE_URL}"
       - key: POSTGRES_DB
         value: "${db.DATABASE}"
+
       - key: POSTGRES_USER
         value: "${db.USERNAME}"
       - key: POSTGRES_PASSWORD

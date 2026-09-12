@@ -10,4 +10,7 @@ staticfiles/
 *.log
 .vscode/
 .idea/
+deploy_do.py
+check_do_app.py
+
 
