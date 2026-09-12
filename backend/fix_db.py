@@ -12,28 +12,43 @@ def prepare_database():
         db_url = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
 
     if not db_url:
-        print("No PostgreSQL database configured. Skipping database schema preparation.")
         return
 
-    print("Preparing PostgreSQL schema permissions...")
+    print("=== STARTING DATABASE SCHEMA PERMISSION FIX ===")
     try:
         import psycopg
-        with psycopg.connect(db_url) as conn:
-            with conn.cursor() as cur:
-                # Create custom schema where user has owner rights
-                cur.execute("CREATE SCHEMA IF NOT EXISTS maystudio;")
-                try:
-                    cur.execute("GRANT ALL ON SCHEMA public TO CURRENT_USER;")
-                except Exception as e:
-                    print("Notice (public schema grant):", e)
-                try:
-                    cur.execute("GRANT ALL ON SCHEMA maystudio TO CURRENT_USER;")
-                except Exception as e:
-                    print("Notice (maystudio schema grant):", e)
-                conn.commit()
-        print("Schema 'maystudio' prepared successfully!")
+        conn = psycopg.connect(db_url, autocommit=True)
+        cur = conn.cursor()
+
+        # 1. Attempt to transfer ownership of schema public to current user
+        try:
+            print("Executing: ALTER SCHEMA public OWNER TO CURRENT_USER;")
+            cur.execute("ALTER SCHEMA public OWNER TO CURRENT_USER;")
+            print("SUCCESS: public schema owner changed to current user!")
+        except Exception as e:
+            print("Notice: ALTER SCHEMA public OWNER failed:", e)
+
+        # 2. Grant all privileges on schema public to PUBLIC
+        try:
+            print("Executing: GRANT ALL ON SCHEMA public TO PUBLIC;")
+            cur.execute("GRANT ALL ON SCHEMA public TO PUBLIC;")
+            print("SUCCESS: Granted ALL on schema public!")
+        except Exception as e:
+            print("Notice: GRANT ALL ON SCHEMA public failed:", e)
+
+        # 3. Create schema maystudio as additional fallback
+        try:
+            print("Executing: CREATE SCHEMA IF NOT EXISTS maystudio;")
+            cur.execute("CREATE SCHEMA IF NOT EXISTS maystudio;")
+            print("SUCCESS: Schema maystudio ensured!")
+        except Exception as e:
+            print("Notice: CREATE SCHEMA maystudio failed:", e)
+
+        cur.close()
+        conn.close()
+        print("=== DATABASE PERMISSION FIX COMPLETED ===")
     except Exception as e:
-        print("Warning during schema setup (continuing):", e)
+        print("CRITICAL NOTICE during fix_db.py execution:", e)
 
 if __name__ == '__main__':
     prepare_database()
