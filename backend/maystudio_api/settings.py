@@ -109,3 +109,17 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
 }
+
+from django.db.backends.signals import connection_created
+
+def prepare_postgres_schema(sender, connection, **kwargs):
+    if connection.vendor == 'postgresql':
+        with connection.cursor() as cursor:
+            try:
+                cursor.execute("CREATE SCHEMA IF NOT EXISTS maystudio_app;")
+                cursor.execute("SET search_path TO maystudio_app, public;")
+            except Exception as e:
+                print("Notice: PostgreSQL schema setup warning:", e)
+
+connection_created.connect(prepare_postgres_schema)
+

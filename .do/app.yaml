@@ -23,7 +23,17 @@ services:
       - key: DJANGO_ALLOWED_HOSTS
         value: "*"
       - key: USE_POSTGRES
-        value: "False"
+        value: "True"
+      - key: POSTGRES_DB
+        value: "${db.DATABASE}"
+      - key: POSTGRES_USER
+        value: "${db.USERNAME}"
+      - key: POSTGRES_PASSWORD
+        value: "${db.PASSWORD}"
+      - key: POSTGRES_HOST
+        value: "${db.HOSTNAME}"
+      - key: POSTGRES_PORT
+        value: "${db.PORT}"
 
 static_sites:
   - name: frontend
@@ -35,3 +45,9 @@ static_sites:
     envs:
       - key: VITE_API_URL
         value: "${backend.PUBLIC_URL}/api"
+
+databases:
+  - name: db
+    engine: PG
+    version: "16"
+    production: false
