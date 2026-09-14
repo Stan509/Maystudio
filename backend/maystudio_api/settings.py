@@ -67,27 +67,25 @@ if USE_POSTGRES:
             }
         except ImportError:
             DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / 'db.sqlite3'}}
-
     else:
         db_host = os.getenv('POSTGRES_HOST', 'localhost')
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
-                'NAME': os.getenv('POSTGRES_DB', 'maystudio'),
+                'NAME': os.getenv('POSTGRES_DB', 'defaultdb'),
                 'USER': os.getenv('POSTGRES_USER', 'maystudio'),
                 'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'change-me'),
                 'HOST': db_host,
-                'PORT': os.getenv('POSTGRES_PORT', '5432'),
+                'PORT': os.getenv('POSTGRES_PORT', '25060'),
                 'OPTIONS': {
                     'sslmode': 'require' if db_host not in ['localhost', '127.0.0.1', 'db'] else 'prefer',
                 }
             }
         }
     DATABASES['default'].setdefault('OPTIONS', {})
-    DATABASES['default']['OPTIONS']['options'] = '-c search_path=maystudio,public'
+    DATABASES['default']['OPTIONS']['options'] = '-c search_path=maystudio_app,public'
 else:
     DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / 'db.sqlite3'}}
-
 
 
 AUTH_PASSWORD_VALIDATORS = []
@@ -116,10 +114,18 @@ def prepare_postgres_schema(sender, connection, **kwargs):
     if connection.vendor == 'postgresql':
         with connection.cursor() as cursor:
             try:
-                cursor.execute("CREATE SCHEMA IF NOT EXISTS maystudio_app;")
+                cursor.execute("CREATE SCHEMA IF NOT EXISTS maystudio_app AUTHORIZATION CURRENT_USER;")
+            except Exception:
+                pass
+            try:
+                cursor.execute("GRANT ALL ON SCHEMA maystudio_app TO PUBLIC;")
+            except Exception:
+                pass
+            try:
                 cursor.execute("SET search_path TO maystudio_app, public;")
-            except Exception as e:
-                print("Notice: PostgreSQL schema setup warning:", e)
+            except Exception:
+                pass
 
 connection_created.connect(prepare_postgres_schema)
+
 
